@@ -1,0 +1,325 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>中国餐饮投资反推计算器</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#f0efe9;
+  color:#1e1e1e;
+  line-height:1.5;
+  padding:0 0 48px 0
+}
+.container{max-width:960px;margin:0 auto;padding:0 16px}
+.header{background:#1a2a33;color:#fff;padding:28px 0 24px;margin-bottom:28px}
+.header h1{font-size:1.5rem;font-weight:600;letter-spacing:.5px}
+.header p{font-size:.88rem;color:#a0b4be;margin-top:4px}
+.card{background:#fff;border-radius:6px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card-title{font-size:.82rem;font-weight:600;color:#6b7b84;text-transform:uppercase;letter-spacing:.5px;padding:16px 20px 0}
+.card-body{padding:16px 20px 20px}
+.form-row{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:12px}
+.form-group{flex:1;min-width:180px}
+.form-group label{display:block;font-size:.82rem;font-weight:500;color:#555;margin-bottom:4px}
+.form-group input,.form-group select{
+  width:100%;padding:9px 12px;font-size:.92rem;border:1px solid #d0d0d0;border-radius:4px;background:#fff;color:#1e1e1e
+}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#2d7a9b;box-shadow:0 0 0 2px rgba(45,122,155,.15)}
+.input-hint{font-size:.75rem;color:#8a8a8a;margin-top:3px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 24px;font-size:.92rem;font-weight:500;border:none;border-radius:4px;cursor:pointer;
+  transition:background .15s
+}
+.btn-primary{background:#1a2a33;color:#fff}
+.btn-primary:hover{background:#243e4a}
+.btn-outline{background:transparent;border:1px solid #c0c0c0;color:#555}
+.btn-outline:hover{background:#f0f0f0}
+.btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.result-item{padding:12px;background:#f8f7f4;border-radius:4px}
+.result-item .label{font-size:.75rem;color:#6b7b84;margin-bottom:2px}
+.result-item .value{font-size:1.15rem;font-weight:600;color:#1a2a33}
+.result-item .sub{font-size:.78rem;color:#888;margin-top:1px}
+.result-item.highlight{background:#e8f0f5}
+.result-item.highlight .value{color:#1a6b8a}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+thead th{background:#f3f2ed;padding:8px 10px;text-align:left;font-weight:500;color:#555;border-bottom:1px solid #e0dcd4}
+tbody td{padding:8px 10px;border-bottom:1px solid #eee;color:#333}
+tbody tr:last-child td{border-bottom:none}
+.number{font-feature-settings:"tnum" 1;text-align:right}
+.sens-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:8px}
+.sens-item{background:#f8f7f4;border-radius:4px;padding:10px 12px}
+.sens-item .sens-label{font-size:.78rem;color:#6b7b84;margin-bottom:6px;font-weight:500}
+.sens-item .sens-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.84rem;border-bottom:1px dashed #e0dcd4}
+.sens-item .sens-row:last-child{border-bottom:none}
+.sens-item .sens-row .var{color:#555}
+.sens-item .sens-row .val{font-weight:600}
+.sens-item .sens-row .delta{font-size:.78rem;color:#888;margin-left:6px}
+.sens-item .sens-row.positive .val{color:#1a7a3a}
+.sens-item .sens-row.negative .val{color:#b33a3a}
+.toggle-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:.85rem;color:#555}
+.toggle-btn{padding:6px 14px;border:1px solid #d0d0d0;border-radius:4px;background:#fff;cursor:pointer;font-size:.82rem;color:#555}
+.toggle-btn.active{background:#1a2a33;color:#fff;border-color:#1a2a33}
+@media(max-width:640px){
+  .form-row{flex-direction:column;gap:10px}
+  .form-group{min-width:unset}
+  .result-grid{grid-template-columns:1fr 1fr}
+  .header h1{font-size:1.2rem}
+}
+@media(max-width:400px){
+  .result-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <h1>中国餐饮投资反推模型</h1>
+    <p>已知面积与人均消费 → 反推投资总额与资金分配 · 高/中/低三档 · 含回本周期</p>
+  </div>
+</div>
+<div class="container">
+<div class="card">
+  <div class="card-title">已知条件</div>
+  <div class="card-body">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="area">面积 (㎡)</label>
+        <input type="number" id="area" value="150" min="20" max="2000" step="1">
+      </div>
+      <div class="form-group">
+        <label for="price">人均消费 (¥)</label>
+        <input type="number" id="price" value="40" min="3" max="500" step="1">
+      </div>
+      <div class="form-group">
+        <label for="tier">业态定位</label>
+        <select id="tier">
+          <option value="low">低档 · 快餐/简餐/烘焙咖啡</option>
+          <option value="mid" selected>中档 · 小酒馆 / 休闲餐吧 / 休闲正餐</option>
+          <option value="high">高档 · 高级餐厅 / 美食体验</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="calcBtn">计算</button>
+    </div>
+  </div>
+</div>
+<div class="card" id="spaceCard" style="display:none">
+  <div class="card-title">空间推算</div>
+  <div class="card-body">
+    <div class="result-grid" id="spaceResults"></div>
+  </div>
+</div>
+<div class="card" id="revenueCard" style="display:none">
+  <div class="card-title">营收推算</div>
+  <div class="card-body">
+    <div class="result-grid" id="revenueResults"></div>
+  </div>
+</div>
+<div class="card" id="investCard" style="display:none">
+  <div class="card-title">投资反推</div>
+  <div class="card-body">
+    <div class="result-grid" id="investResults"></div>
+  </div>
+</div>
+<div class="card" id="allocCard" style="display:none">
+  <div class="card-title">推算投资额 · 资金分配拆解</div>
+  <div class="card-body">
+    <table id="allocTable">
+      <thead><tr><th>项目</th><th style="width:60px;text-align:right">占比</th><th style="width:120px;text-align:right">金额 (¥)</th><th>备注</th></tr></thead>
+      <tbody id="allocBody"></tbody>
+    </table>
+  </div>
+</div>
+<div class="card" id="sensCard" style="display:none">
+  <div class="card-title">敏感性分析 —— 关键变量对投资的影响</div>
+  <div class="card-body">
+    <p style="font-size:.82rem;color:#6b7b84;margin-bottom:10px">以当前输入参数为基准，以下展示关键参数浮动对反推总投资的影响</p>
+    <div class="sens-grid" id="sensResults"></div>
+  </div>
+</div>
+<div style="margin-top:24px;padding:16px;font-size:.78rem;color:#8a8a8a;border-top:1px solid #e0dcd4">
+  <p>数据基准：中国一线/二线城市 · 货币单位：人民币 (¥)</p>
+  <p style="margin-top:2px">以上反推模型可作为投前预算编制的粗略参考。实际操作中，请在框算投资基础上增加 15%-20% 的预备金，以应对材料涨价、工期延误、审批延期等不可预见支出。建议在正式投资前聘请本地项目管理顾问进行精细化估算。</p>
+</div>
+</div>
+<script>
+const TIER_PARAMS = {
+  low: {
+    label: '低档 · 快餐/简餐/烘焙咖啡',
+    diningRatio: 0.58, diningRatioRange: '55%-60%',
+    seatDensity: 1.5, seatDensityRange: '1.5-1.8㎡/座',
+    extraSeats: 0, extraSeatsLabel: '',
+    turnover: 3.5, weekdayOcc: 0.65, weekendOcc: 0.85,
+    netProfitMargin: 0.15, netProfitMarginRange: '12%-18%',
+    paybackPeriod: 14, paybackRange: '10-18个月',
+    currency: '¥',
+    allocation: [
+      {item:'硬装施工（含人工）',pct:40,note:'约¥380/㎡，基础材料+人工'},
+      {item:'厨房设备（国内商用级）',pct:18,note:'中国国家检测标准'},
+      {item:'家具软装（桌椅、灯具、招牌）',pct:12,note:'耐用易清洁'},
+      {item:'曧通空调',pct:8,note:'国家能效C级以上'},
+      {item:'消防与安防',pct:5,note:'报警+灭火器'},
+      {item:'设计费',pct:5,note:'平面布局+施工图'},
+      {item:'许可与法律费',pct:5,note:'执照+消防审查'},
+      {item:'开办费（首批库存+培训）',pct:5,note:'首批库存+培训'},
+      {item:'智能设备（收银系统等）',pct:2,note:'基础收银系统'}
+    ]
+  },
+  mid: {
+    label: '中档 · 小酒馆 / 休闲餐吧 / 休闲正餐',
+    diningRatio: 0.52, diningRatioRange: '50%-55%',
+    seatDensity: 2.0, seatDensityRange: '1.8-2.5㎡/座',
+    extraSeats: 4, extraSeatsLabel: '吧台座位',
+    turnover: 2.5, weekdayOcc: 0.65, weekendOcc: 0.85,
+    netProfitMargin: 0.18, netProfitMarginRange: '15%-22%',
+    paybackPeriod: 22, paybackRange: '18-30个月',
+    currency: '¥',
+    allocation: [
+      {item:'硬装施工（含人工）',pct:35,note:'优质材料+精细施工，¥650/㎡'},
+      {item:'厨房设备（专业级）',pct:16,note:'专业分区+明厨配置'},
+      {item:'家具软装（定制家具）',pct:15,note:'设计感家具，品牌氛围'},
+      {item:'灯光与音响',pct:4,note:'分区灯光+背景音乐'},
+      {item:'曧通空调',pct:10,note:'国家空气质量标准'},
+      {item:'消防与安防',pct:5,note:'消防加监控系统'},
+      {item:'设计费',pct:7,note:'概念+施工图+现场配合'},
+      {item:'许可与法律费',pct:4,note:'含营业执照+消防审查'},
+      {item:'开办费（开业活动+库存）',pct:6,note:'开业活动+库存'},
+      {item:'智能设备',pct:4,note:'收银系统加订位管理等'}
+    ]
+  },
+  high: {
+    label: '高档 · 高级餐厅 / 美食体验',
+    diningRatio: 0.48, diningRatioRange: '45%-50%',
+    seatDensity: 3.0, seatDensityRange: '2.5-3.5㎡/座',
+    extraSeats: 4, extraSeatsLabel: '包厢座位',
+    turnover: 1.8, weekdayOcc: 0.55, weekendOcc: 0.75,
+    netProfitMargin: 0.20, netProfitMarginRange: '18%-25%',
+    paybackPeriod: 28, paybackRange: '24-36个月',
+    currency: '¥',
+    allocation: [
+      {item:'硬装施工（含人工）',pct:30,note:'高端材料+精工，¥1,200/㎡'},
+      {item:'厨房设备（顶级商用）',pct:15,note:'进口设备+酒柜'},
+      {item:'家具软装（设计师款+艺术品）',pct:20,note:'定制家具+艺术装置'},
+      {item:'灯光与音响',pct:6,note:'专业灯光+调光系统'},
+      {item:'曧通空调',pct:10,note:'中央空调+新风系统'},
+      {item:'消防与安防',pct:5,note:'自动喷淋+灭火器'},
+      {item:'包厢装修',pct:5,note:'包厢独立装修'},
+      {item:'设计费（知名设计师/事务所）',pct:8,note:'概念+深化+全程服务'},
+      {item:'许可与法律费',pct:3,note:'含营业执照+消防审查'},
+      {item:'开办费（高端食材加推广活动）',pct:6,note:'高端食材加推广活动'},
+      {item:'智能设备',pct:4,note:'高端客户管理系统加预订系统'}
+    ]
+  }
+};function fmt(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmtMoney(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return'\u00a5'+n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmtFloat(n,d){if(n===undefined||n===null||isNaN(n))return'\u2014';return n.toFixed(d||1)}
+function calc(){
+  const area=parseFloat(document.getElementById('area').value)||0;
+  const price=parseFloat(document.getElementById('price').value)||0;
+  const t=document.getElementById('tier').value;
+  const p=TIER_PARAMS[t];
+  if(area<=0||price<=0){document.querySelectorAll('.card[id$="Card"]').forEach(c=>c.style.display='none');return}
+  const diningArea=area*p.diningRatio;
+  const baseSeats=Math.floor(diningArea/p.seatDensity);
+  const totalSeats=baseSeats+p.extraSeats;
+  const weekdayTraffic=totalSeats*p.turnover*p.weekdayOcc;
+  const weekendTraffic=totalSeats*p.turnover*p.weekendOcc;
+  const monthlyTraffic=weekdayTraffic*22+weekendTraffic*8;
+  const monthlyRevenue=monthlyTraffic*price;
+  const annualRevenue=monthlyRevenue*12;
+  const monthlyProfit=monthlyRevenue*p.netProfitMargin;
+  const totalInvestment=monthlyProfit*p.paybackPeriod;
+  const costPerSqm=totalInvestment/area;
+  const investLow=Math.round(totalInvestment*0.95/1000)*1000;
+  const investHigh=Math.round(totalInvestment*1.05/1000)*1000;
+  document.getElementById('spaceResults').innerHTML=
+    i('\u603b\u9762\u79ef',area+'\u33a1','')+
+    i('\u4e1a\u6001\u5b9a\u4f4d',p.label,'')+
+    i('\u5c31\u9910\u533a\u9762\u79ef\u5360\u6bd4',(p.diningRatio*100)+'%','\u8303\u56f4\uff1a'+p.diningRatioRange)+
+    i('\u5c31\u9910\u533a\u9762\u79ef',fmtFloat(diningArea,1)+'\u33a1',area+'\u00d7'+(p.diningRatio*100)+'%')+
+    i('\u5ea7\u4f4d\u5bc6\u5ea6',fmtFloat(p.seatDensity,1)+'\u33a1/\u5ea7','\u8303\u56f4\uff1a'+p.seatDensityRange)+
+    i('\u57fa\u672c\u5ea7\u4f4d\u6570',baseSeats+'\u5ea7',fmtFloat(diningArea,1)+'\u00f7'+fmtFloat(p.seatDensity,1))+
+    (p.extraSeats>0?i('\u9644\u52a0\u5ea7\u4f4d\uff08'+p.extraSeatsLabel+'\uff09','+'+p.extraSeats+'\u5ea7',''):'')+
+    i('\u603b\u5ea7\u4f4d\u6570',totalSeats+'\u5ea7','\u542b\u9644\u52a0\u5ea7\u4f4d',true);
+  document.getElementById('revenueResults').innerHTML=
+    i('\u65e5\u5747\u7ffb\u53f0\u7387',fmtFloat(p.turnover,1)+' \u6b21','')+
+    i('\u5e73\u65e5\u4e0a\u5ea7\u7387',(p.weekdayOcc*100)+'%','')+
+    i('\u5e73\u65e5\u65e5\u5747\u5ba2\u6d41\u91cf',Math.round(weekdayTraffic)+' \u4eba/\u5929',totalSeats+'\u00d7'+fmtFloat(p.turnover,1)+'\u00d7'+(p.weekdayOcc*100)+'%')+
+    i('\u5468\u672b\u4e0a\u5ea7\u7387',(p.weekendOcc*100)+'%','')+
+    i('\u5468\u672b\u65e5\u5747\u5ba2\u6d41\u91cf',Math.round(weekendTraffic)+' \u4eba/\u5929',totalSeats+'\u00d7'+fmtFloat(p.turnover,1)+'\u00d7'+(p.weekendOcc*100)+'%')+
+    i('\u6708\u52a0\u6743\u5ba2\u6d41\u91cf',fmt(Math.round(monthlyTraffic))+' \u4eba/\u6708',Math.round(weekdayTraffic)+'\u00d722 + '+Math.round(weekendTraffic)+'\u00d78')+
+    i('\u6708\u8425\u6536',fmtMoney(Math.round(monthlyRevenue)),fmt(Math.round(monthlyTraffic))+'\u00d7\u20ac'+fmtFloat(price,0),true)+
+    i('\u5e74\u8425\u6536',fmtMoney(Math.round(annualRevenue)),fmtMoney(Math.round(monthlyRevenue))+'\u00d7 12',true);
+  document.getElementById('investResults').innerHTML=
+    i('\u51c0\u5229\u6da6\u7387',(p.netProfitMargin*100)+'%','\u8303\u56f4\uff1a'+p.netProfitMarginRange)+
+    i('\u6708\u51c0\u5229\u6da6',fmtMoney(Math.round(monthlyProfit)),fmtMoney(Math.round(monthlyRevenue))+'\u00d7'+(p.netProfitMargin*100)+'%',true)+
+    i('\u76ee\u6807\u56de\u672c\u5468\u671f',p.paybackPeriod+' \u4e2a\u6708','\u8303\u56f4\uff1a'+p.paybackRange)+
+    i('\u63a8\u7b97\u603b\u6295\u8d44',fmtMoney(Math.round(totalInvestment)),fmtMoney(Math.round(monthlyProfit))+'\u00d7'+p.paybackPeriod,true)+
+    i('\u53d6\u6574\u6295\u8d44\u989d','\u20ac'+fmt(investLow)+' \u2013 '+fmt(investHigh),'\u00b15% \u6d6e\u52a8\u8303\u56f4')+
+    i('\u5355\u5e73\u65b9\u9020\u4ef7','\u20ac'+fmt(Math.round(costPerSqm))+'/\u33a1',fmtMoney(Math.round(totalInvestment))+'\u00f7'+area,true);
+  let allocBody='';
+  let sumPct=0;
+  p.allocation.forEach(a=>{
+    const amt=Math.round(totalInvestment*a.pct/100);
+    sumPct+=a.pct;
+    allocBody+='<tr><td>'+a.item+'</td><td class="number">'+a.pct+'%</td><td class="number">'+fmtMoney(amt)+'</td><td style="color:#888;font-size:.8rem">'+a.note+'</td></tr>';
+  });
+  allocBody+='<tr style="font-weight:600;background:#f8f7f4"><td>\u5408\u8ba1</td><td class="number">'+sumPct+'%</td><td class="number">'+fmtMoney(Math.round(totalInvestment))+'</td><td></td></tr>';
+  document.getElementById('allocBody').innerHTML=allocBody;
+  const baseInvest=monthlyProfit*p.paybackPeriod;
+  const sensVars=[
+    {label:'\u51c0\u5229\u6da6\u7387',rows:[
+      {desc:(p.netProfitMargin*100-2)+'%\uff08-2%\uff09',invest:monthlyProfit*(p.netProfitMargin-0.02)/p.netProfitMargin*p.paybackPeriod},
+      {desc:(p.netProfitMargin*100)+'%\uff08\u57fa\u51c6\uff09',invest:monthlyProfit*p.paybackPeriod,base:true},
+      {desc:(p.netProfitMargin*100+2)+'%\uff08+2%\uff09',invest:monthlyProfit*(p.netProfitMargin+0.02)/p.netProfitMargin*p.paybackPeriod}
+    ]},
+    {label:'\u56de\u672c\u5468\u671f',rows:[
+      {desc:(p.paybackPeriod-6)+'\u4e2a\u6708\uff08-6\uff09',invest:monthlyProfit*(p.paybackPeriod-6)},
+      {desc:p.paybackPeriod+'\u4e2a\u6708\uff08\u57fa\u51c6\uff09',invest:monthlyProfit*p.paybackPeriod,base:true},
+      {desc:(p.paybackPeriod+6)+'\u4e2a\u6708\uff08+6\uff09',invest:monthlyProfit*(p.paybackPeriod+6)}
+    ]},
+    {label:'\u4eba\u5747\u6d88\u8d39',rows:[
+      {desc:'\u20ac'+(price-5)+'\uff08-\u20ac5\uff09',invest:(monthlyRevenue-monthlyTraffic*5)*p.netProfitMargin*p.paybackPeriod},
+      {desc:'\u20ac'+price+'\uff08\u57fa\u51c6\uff09',invest:monthlyProfit*p.paybackPeriod,base:true},
+      {desc:'\u20ac'+(price+5)+'\uff08+\u20ac5\uff09',invest:(monthlyRevenue+monthlyTraffic*5)*p.netProfitMargin*p.paybackPeriod}
+    ]},
+    {label:'\u7ffb\u53f0\u7387',rows:[
+      {desc:fmtFloat(p.turnover-0.5,1)+'\u6b21\uff08-0.5\uff09',invest:(monthlyRevenue*(p.turnover-0.5)/p.turnover)*p.netProfitMargin*p.paybackPeriod},
+      {desc:fmtFloat(p.turnover,1)+'\u6b21\uff08\u57fa\u51c6\uff09',invest:monthlyProfit*p.paybackPeriod,base:true},
+      {desc:fmtFloat(p.turnover+0.5,1)+'\u6b21\uff08+0.5\uff09',invest:(monthlyRevenue*(p.turnover+0.5)/p.turnover)*p.netProfitMargin*p.paybackPeriod}
+    ]}
+  ];
+  let sensHtml='';
+  sensVars.forEach(v=>{
+    let rh='<div class="sens-item"><div class="sens-label">'+v.label+'</div>';
+    v.rows.forEach(r=>{
+      const d=r.invest-baseInvest;
+      const cls=r.base?'':(d>0?'positive':'negative');
+      rh+='<div class="sens-row'+(cls?' '+cls:'')+'">'+
+        '<span class="var">'+r.desc+'</span>'+
+        '<span><span class="val">'+(d>=0?'+':'')+fmtMoney(Math.round(r.invest))+'</span>'+
+        (r.base?'':'<span class="delta">'+(d>=0?'+':'')+fmtMoney(Math.round(d))+'</span>')+
+        '</span></div>';
+    });
+    rh+='</div>';sensHtml+=rh;
+  });
+  document.getElementById('sensResults').innerHTML=sensHtml;
+  document.querySelectorAll('.card[id$="Card"]').forEach(c=>c.style.display='block');
+}
+function i(label,value,sub,highlight){
+  return '<div class="result-item'+(highlight?' highlight':'')+'"><div class="label">'+label+'</div><div class="value">'+value+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+}
+document.getElementById('calcBtn').addEventListener('click',calc);
+['area','price'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')calc()});
+});
+window.addEventListener('DOMContentLoaded',calc);
+</script>
+</body>
+</html>
