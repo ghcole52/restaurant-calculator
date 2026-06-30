@@ -112,7 +112,14 @@ tbody tr:last-child td{border-bottom:none}
 <div class="card" id="spaceCard" style="display:none">
   <div class="card-title">空间推算</div>
   <div class="card-body">
-    <div class="result-grid" id="spaceResults"></div>
+    <div class="result-grid" id="spaceResults">
+    <div style="margin:14px 0 10px;border-top:1px solid #e0dcd4"></div>
+    <div style="font-size:.78rem;font-weight:600;color:#6b7b84;margin-bottom:6px">功能区面积划分</div>
+    <table style="margin-top:4px;width:100%">
+      <thead><tr><th>功能区</th><th style="width:60px;text-align:right">占比</th><th style="width:100px;text-align:right">面积 (㎡)</th></tr></thead>
+      <tbody id="zoneBody"></tbody>
+    </table>
+</div>
   </div>
 </div>
 <div class="card" id="revenueCard" style="display:none">
@@ -213,6 +220,37 @@ const TIER_PARAMS = {
     ]
   }
 };
+
+
+const ZONES = {
+  low: [
+      {name:'\u5C31\u9910\u533A',pct:58},
+      {name:'\u53A8\u623F\u533A',pct:22},
+      {name:'\u6D17\u624B\u95F4',pct:4},
+      {name:'\u50A8\u7269/\u4ED3\u5E93',pct:5},
+      {name:'\u8FC7\u9053',pct:7},
+      {name:'\u524D\u53F0/\u6536\u94F6',pct:4}
+    ],
+  mid: [
+      {name:'\u5C31\u9910\u533A',pct:52},
+      {name:'\u53A8\u623F\u533A',pct:20},
+      {name:'\u6D17\u624B\u95F4',pct:6},
+      {name:'\u50A8\u7269/\u4ED3\u5E93',pct:5},
+      {name:'\u8FC7\u9053',pct:8},
+      {name:'\u524D\u53F0/\u63A5\u5F85',pct:4},
+      {name:'\u9152\u6C34\u5427',pct:5}
+    ],
+  high: [
+      {name:'\u5C31\u9910\u533A',pct:48},
+      {name:'\u53A8\u623F\u533A',pct:20},
+      {name:'\u6D17\u624B\u95F4',pct:6},
+      {name:'\u50A8\u7269/\u4ED3\u5E93',pct:5},
+      {name:'\u8FC7\u9053',pct:7},
+      {name:'\u524D\u53F0/\u63A5\u5F85',pct:3},
+      {name:'\u9152\u6C34\u5427',pct:6},
+      {name:'\u54C1\u9152\u5427\u53F0',pct:5}
+    ]
+};
 function fmt(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
 function fmtMoney(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return'\u20ac'+n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
 function fmtFloat(n,d){if(n===undefined||n===null||isNaN(n))return'\u2014';return n.toFixed(d||1)}
@@ -244,7 +282,19 @@ function calc(){
     i('\u57fa\u672c\u5ea7\u4f4d\u6570',baseSeats+'\u5ea7',fmtFloat(diningArea,1)+'\u00f7'+fmtFloat(p.seatDensity,1))+
     (p.extraSeats>0?i('\u9644\u52a0\u5ea7\u4f4d\uff08'+p.extraSeatsLabel+'\uff09','+'+p.extraSeats+'\u5ea7',''):'')+
     i('\u603b\u5ea7\u4f4d\u6570',totalSeats+'\u5ea7','\u542b\u9644\u52a0\u5ea7\u4f4d',true);
-  document.getElementById('revenueResults').innerHTML=
+  document.
+  let zoneBody = "";
+  let zoneSum = 0;
+  const zones = ZONES[t];
+  zones.forEach(z => {
+    const zArea = area * z.pct / 100;
+    zoneSum += z.pct;
+    zoneBody += "<tr><td>" + z.name + "</td><td class=\"number\">" + z.pct + "%</td><td class=\"number\">" + fmtFloat(zArea, 1) + "</td></tr>";
+  });
+  zoneBody += '<tr style="font-weight:600;background:#f8f7f4"><td>合计</td><td class="number">' + zoneSum + "%</td><td class=\"number\">" + fmtFloat(area, 1) + "</td></tr>";
+  document.getElementById("zoneBody").innerHTML = zoneBody;
+
+  getElementById('revenueResults').innerHTML=
     i('\u65e5\u5747\u7ffb\u53f0\u7387',fmtFloat(p.turnover,1)+' \u6b21','')+
     i('\u5e73\u65e5\u4e0a\u5ea7\u7387',(p.weekdayOcc*100)+'%','')+
     i('\u5e73\u65e5\u65e5\u5747\u5ba2\u6d41\u91cf',Math.round(weekdayTraffic)+' \u4eba/\u5929',totalSeats+'\u00d7'+fmtFloat(p.turnover,1)+'\u00d7'+(p.weekdayOcc*100)+'%')+
@@ -259,7 +309,9 @@ function calc(){
     i('\u76ee\u6807\u56de\u672c\u5468\u671f',p.paybackPeriod+' \u4e2a\u6708','\u8303\u56f4\uff1a'+p.paybackRange)+
     i('\u63a8\u7b97\u603b\u6295\u8d44',fmtMoney(Math.round(totalInvestment)),fmtMoney(Math.round(monthlyProfit))+'\u00d7'+p.paybackPeriod,true)+
     i('\u53d6\u6574\u6295\u8d44\u989d','\u20ac'+fmt(investLow)+' \u2013 '+fmt(investHigh),'\u00b15% \u6d6e\u52a8\u8303\u56f4')+
-    i('\u5355\u5e73\u65b9\u9020\u4ef7','\u20ac'+fmt(Math.round(costPerSqm))+'/\u33a1',fmtMoney(Math.round(totalInvestment))+'\u00f7'+area,true);
+    i('\u5355\u5e73\u65b9\u9020\u4ef7','\u20ac'+fmt(Math.round(costPerSqm))+'/\u33a1',fmtMoney(Math.round(totalInvestment))+'\u00f7'+area,true);+
+    i('\u53C2\u8003\u8861\u91CF','€500-800/㎡  €1,500-2,500/㎡  €3,000-5,000/㎡','\u884C\u4E1A\u53C2\u8003\u4EF7\uFF0C\u5B9E\u9645\u9020\u4EF7\u56E0\u57CE\u5E02\u3001\u88C5\u4FEE\u6807\u51C6\u800C\u5F02');
+  
   let allocBody='';
   let sumPct=0;
   p.allocation.forEach(a=>{
