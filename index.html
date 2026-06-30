@@ -302,6 +302,8 @@ function calc(){
     i('\u5355\u5e73\u65b9\u9020\u4ef7','\u20ac'+fmt(Math.round(costPerSqm))+'/\u33a1',fmtMoney(Math.round(totalInvestment))+'\u00f7'+area,true);+
     i('????','€500-800/㎡  €1,500-2,500/㎡  €3,000-5,000/㎡','行业参考价，实际造价因城市、装修标准而异');
   +
+    i('????','€500-800/㎡  €1,500-2,500/㎡  €3,000-5,000/㎡','行业参考价，实际造价因城市、装修标准而异');
+  +
     i('\u53C2\u8003\u8861\u91CF','€500-800/㎡  €1,500-2,500/㎡  €3,000-5,000/㎡','\u884C\u4E1A\u53C2\u8003\u4EF7\uFF0C\u5B9E\u9645\u9020\u4EF7\u56E0\u57CE\u5E02\u3001\u88C5\u4FEE\u6807\u51C6\u800C\u5F02');
   
   let allocBody='';
@@ -356,6 +358,17 @@ function calc(){
   let zBody = '';
   let zSum = 0;
   const zData = ZONES[t];
+  zData.forEach(z => {
+    const zArea = area * z.pct / 100;
+    zSum += z.pct;
+    zBody += '<tr><td>' + z.name + '</td><td class="number">' + z.pct + '%</td><td class="number">' + fmtFloat(zArea, 1) + '</td></tr>';
+  });
+  zBody += '<tr style="font-weight:600;background:#f8f7f4"><td>合计</td><td class="number">' + zSum + '%</td><td class="number">' + fmtFloat(area, 1) + '</td></tr>';
+  document.getElementById('zoneBody').innerHTML = zBody;
+
+  
+
+
   zData.forEach(z => {
     const zArea = area * z.pct / 100;
     zSum += z.pct;
