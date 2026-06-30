@@ -113,6 +113,12 @@ tbody tr:last-child td{border-bottom:none}
   <div class="card-title">空间推算</div>
   <div class="card-body">
     <div class="result-grid" id="spaceResults"></div>
+    <div class="section-divider" style="margin:14px 0 10px"></div>
+    <div class="card-subtitle" style="font-size:.78rem;font-weight:600;color:#6b7b84;margin-bottom:6px">功能区面积划分</div>
+    <table id="zoneTable" style="margin-top:4px">
+      <thead><tr><th>功能区</th><th style="width:60px;text-align:right">占比</th><th style="width:100px;text-align:right">面积 (㎡)</th></tr></thead>
+      <tbody id="zoneBody"></tbody>
+    </table>
   </div>
 </div>
 <div class="card" id="revenueCard" style="display:none">
@@ -169,7 +175,15 @@ const TIER_PARAMS = {
       {item:'许可与法律费',pct:5,note:'执照+消防审查'},
       {item:'开办费（首批库存+培训）',pct:5,note:'首批库存+培训'},
       {item:'智能设备（收银系统等）',pct:2,note:'基础收银系统'}
-    ]
+    ,
+    zones: [
+      {name:'就餐区',pct:58}
+      {name:'厨房区',pct:22}
+      {name:'洗手间',pct:4}
+      {name:'储物/仓库',pct:6}
+      {name:'过道',pct:6}
+      {name:'前台/收银',pct:4}
+    ]]
   },
   mid: {
     label: '中档 · 小酒馆 / 休闲餐吧 / 休闲正餐',
@@ -191,7 +205,16 @@ const TIER_PARAMS = {
       {item:'许可与法律费',pct:4,note:'含营业执照+消防审查'},
       {item:'开办费（开业活动+库存）',pct:6,note:'开业活动+库存'},
       {item:'智能设备',pct:4,note:'收银系统加订位管理等'}
-    ]
+    ,
+    zones: [
+      {name:'就餐区',pct:52}
+      {name:'厨房区',pct:20}
+      {name:'洗手间',pct:6}
+      {name:'储物/仓库',pct:6}
+      {name:'过道',pct:7}
+      {name:'前台/接待',pct:4}
+      {name:'酒水吧',pct:5}
+    ]]
   },
   high: {
     label: '高档 · 高级餐厅 / 美食体验',
@@ -214,7 +237,17 @@ const TIER_PARAMS = {
       {item:'许可与法律费',pct:3,note:'含营业执照+消防审查'},
       {item:'开办费（高端食材加推广活动）',pct:6,note:'高端食材加推广活动'},
       {item:'智能设备',pct:4,note:'高端客户管理系统加预订系统'}
-    ]
+    ,
+    zones: [
+      {name:'就餐区',pct:48}
+      {name:'厨房区',pct:20}
+      {name:'洗手间',pct:6}
+      {name:'储物/仓库',pct:5}
+      {name:'过道',pct:6}
+      {name:'前台/接待',pct:3}
+      {name:'酒水吧',pct:5}
+      {name:'包间',pct:7}
+    ]]
   }
 };function fmt(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
 function fmtMoney(n){if(n===undefined||n===null||isNaN(n))return'\u2014';return'\u00a5'+n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
@@ -247,7 +280,18 @@ function calc(){
     i('\u57fa\u672c\u5ea7\u4f4d\u6570',baseSeats+'\u5ea7',fmtFloat(diningArea,1)+'\u00f7'+fmtFloat(p.seatDensity,1))+
     (p.extraSeats>0?i('\u9644\u52a0\u5ea7\u4f4d\uff08'+p.extraSeatsLabel+'\uff09','+'+p.extraSeats+'\u5ea7',''):'')+
     i('\u603b\u5ea7\u4f4d\u6570',totalSeats+'\u5ea7','\u542b\u9644\u52a0\u5ea7\u4f4d',true);
-  document.getElementById('revenueResults').innerHTML=
+    // Render zone breakdown
+  let zoneBody = '';
+  let zoneSum = 0;
+  p.zones.forEach(z => {
+    const zArea = area * z.pct / 100;
+    zoneSum += z.pct;
+    zoneBody += '<tr><td>' + z.name + '</td><td class="number">' + z.pct + '%</td><td class="number">' + fmtFloat(zArea, 1) + '</td></tr>';
+  });
+  zoneBody += '<tr style="font-weight:600;background:#f8f7f4"><td>合计</td><td class="number">' + zoneSum + '%</td><td class="number">' + fmtFloat(area, 1) + '</td></tr>';
+  document.getElementById('zoneBody').innerHTML = zoneBody;
+  
+document.getElementById('revenueResults').innerHTML=
     i('\u65e5\u5747\u7ffb\u53f0\u7387',fmtFloat(p.turnover,1)+' \u6b21','')+
     i('\u5e73\u65e5\u4e0a\u5ea7\u7387',(p.weekdayOcc*100)+'%','')+
     i('\u5e73\u65e5\u65e5\u5747\u5ba2\u6d41\u91cf',Math.round(weekdayTraffic)+' \u4eba/\u5929',totalSeats+'\u00d7'+fmtFloat(p.turnover,1)+'\u00d7'+(p.weekdayOcc*100)+'%')+
@@ -263,6 +307,7 @@ function calc(){
     i('\u63a8\u7b97\u603b\u6295\u8d44',fmtMoney(Math.round(totalInvestment)),fmtMoney(Math.round(monthlyProfit))+'\u00d7'+p.paybackPeriod,true)+
     i('\u53d6\u6574\u6295\u8d44\u989d','\u20ac'+fmt(investLow)+' \u2013 '+fmt(investHigh),'\u00b15% \u6d6e\u52a8\u8303\u56f4')+
     i('\u5355\u5e73\u65b9\u9020\u4ef7','\u20ac'+fmt(Math.round(costPerSqm))+'/\u33a1',fmtMoney(Math.round(totalInvestment))+'\u00f7'+area,true);
+    i('\u53c2\u8003\u8861\u91cf','\u4f4e\u6863\u7ea6\u00a5650-800/\u33a1  \u4e2d\u6863\u7ea6\u00a51,500-2,500/\u33a1  \u9ad8\u6863\u7ea6\u00a53,500-6,000/\u33a1','\u884c\u4e1a\u53c2\u8003\u4ef7\uff0c\u5b9e\u9645\u9020\u4ef7\u56e0\u57ce\u5e02\u3001\u88c5\u4fee\u6807\u51c6\u800c\u5f02');
   let allocBody='';
   let sumPct=0;
   p.allocation.forEach(a=>{
