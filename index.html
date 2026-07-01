@@ -73,6 +73,8 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:400px){
   .result-grid{grid-template-columns:1fr}
 }
+#pwdOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column}#pwdOverlay .pwdBox{background:#fff;padding:28px 20px;border-radius:8px;text-align:center;max-width:300px;width:88%;box-shadow:0 4px 20px rgba(0,0,0,0.3)}#pwdOverlay .pwdTitle{font-size:1.05rem;font-weight:600;color:#1a2a33;margin-bottom:14px}#pwdOverlay .pwdInput{width:100%;padding:10px 12px;border:1px solid #c0c0c0;border-radius:4px;font-size:1rem;text-align:center;box-sizing:border-box;outline:none}#pwdOverlay .pwdInput:focus{border-color:#2d7a9b}#pwdOverlay .pwdBtn{width:100%;padding:10px;margin-top:10px;background:#1a2a33;color:#fff;border:none;border-radius:4px;font-size:1rem;cursor:pointer}#pwdOverlay .pwdBtn:active{background:#243e4a}#pwdOverlay .pwdError{margin-top:10px;font-size:.82rem;color:#b33a3a;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -370,6 +372,7 @@ document.getElementById('calcBtn').addEventListener('click',calc);
   document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')calc()});
 });
 window.addEventListener('DOMContentLoaded',calc);
-</script>
-</body>
+
+(function(){var v=parseInt(localStorage.getItem('calc_v')||'0'),u=localStorage.getItem('calc_u')==='1';if(!u&&v>=2){document.getElementById('pwdOverlay').style.display='flex'}else if(!u){localStorage.setItem('calc_v',String(v+1))}})();document.getElementById('pwdBtn').addEventListener('click',function(){var p=document.getElementById('pwdInput').value;if(p==='0818'){localStorage.setItem('calc_u','1');document.getElementById('pwdOverlay').style.display='none'}else{document.getElementById('pwdError').textContent='有偿使用，作者联系方式 15090575676';document.getElementById('pwdInput').value=''}});</script>
+<div id="pwdOverlay"><div class="pwdBox"><div class="pwdTitle">请输入访问密码</div><input type="password" class="pwdInput" id="pwdInput" placeholder="请输入密码" maxlength="10"><button class="pwdBtn" id="pwdBtn">确认</button><div class="pwdError" id="pwdError"></div></div></div></body>
 </html>
